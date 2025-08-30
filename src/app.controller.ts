@@ -12,6 +12,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 // Modules routing
 import authController from "./modules/auth/auth.controller"
+import userController from "./modules/user/user.controller"
 import { globalErrorHandling } from "./utils/response/error.response";
 // Handle base rate limit on all api request
 const limiter = rateLimit({
@@ -21,8 +22,8 @@ const limiter = rateLimit({
         statusCode:4029
 })
     // App-start-point
-const bootstrap = (): void => {
-    connectDB()
+const bootstrap =async ():Promise <void> => {
+     await connectDB()
     const port:number | string = process.env.PORT || 5000;
     const app: Express = express();
     // Global application middleware
@@ -36,6 +37,7 @@ const bootstrap = (): void => {
     })
     // Sub-app-routing-modules
     app.use("/auth", authController)
+    app.use("/user", userController)
     // In-vaild routing
     app.all("{/*dummy}", (req: Request, res: Response) => {
        return res.status(404).json({message:"In-vaild application routing please check the method and url"})

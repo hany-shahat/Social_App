@@ -1,20 +1,26 @@
-import { EventEmitter } from 'node:events';
-import { sendEmail } from '../email/send.email';
+ import { EventEmitter } from 'node:events';
 import { verifyEmailTemplate } from '../email/templates/verify.email.templates';
-export const emailEvent = new EventEmitter();
-interface IEmailEventData {
-  to: string;
-  subject?: string;
-  otp: string;
+import Mail from 'nodemailer/lib/mailer';
+import { sendEmail } from '../email/send.email';
+interface IEmail extends Mail.Options{
+  otp:number,
 }
-
-emailEvent.on("confirmEmail", async (data: IEmailEventData) => {
-     console.log("📩 Event Triggered with data:", data);
-    await sendEmail({
-      to: data.to,
-      subject: data.subject || "confirm-Email",
-      html:verifyEmailTemplate({otp:data.otp})
-    }).catch((error) => {
-      console.log(`Fail to send to ${data.to}`);
-    });
-})
+export const emailEvent = new EventEmitter();
+emailEvent.on("confirmEmail", async (data: IEmail) => {
+    try {
+      data.subject = "Confirm_Email"
+      data.html = verifyEmailTemplate({ otp:data.otp, title: "ConfirmEmail" })
+      await sendEmail(data)
+    } catch (error) {
+      console.log(`Fail to send email` ,error);
+    }
+}) 
+emailEvent.on("resetPassword", async (data: IEmail) => {
+    try {
+      data.subject = "Reset_Account_Password"
+      data.html = verifyEmailTemplate({ otp:data.otp, title: "Reset code" })
+      await sendEmail(data)
+    } catch (error) {
+      console.log(`Fail to send email` ,error);
+    }
+}) 

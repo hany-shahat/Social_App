@@ -39,5 +39,6 @@ export const generalFields = {
                 .min(2, { error: "min userName length is 2 char" }).max(20, { error: "max userName length is 20 char" }),
             email: z.email({ error: "vaild email must be like to exmple@gmail.com" }),
             password: z.string().regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/),
-            confirmPassword:z.string(),
+    confirmPassword: z.string(),
+            otp:z.string().regex(/^\d{6}$/),
 }

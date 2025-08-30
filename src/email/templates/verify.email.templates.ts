@@ -1,8 +1,4 @@
-interface IVerifyEmailTemplate {
-  otp: string;
-  title?: string;
-}
-export const verifyEmailTemplate = ({ otp, title = "confirm Email" }:IVerifyEmailTemplate) => {
+ export const verifyEmailTemplate = ({ otp, title  }:{otp:number , title:string}):string => {
   return `<!DOCTYPE html>
                 <html>
                 <head>
@@ -49,7 +45,7 @@ export const verifyEmailTemplate = ({ otp, title = "confirm Email" }:IVerifyEmai
                 </tr>
                 <tr>
                 <td>
-                <h2 style="margin:10px 0px 30px 0px;border-radius:4px;padding:10px 20px;border: 0;color:#fff;background-color:#630E2B; ">${otp}</h2>
+                <p style="margin:10px 0px 30px 0px;border-radius:4px;padding:10px 20px;border: 0;color:#fff;background-color:#630E2B; ">${otp}</p>
                 </td>
                 </tr>
                 </table>
@@ -87,4 +83,4 @@ export const verifyEmailTemplate = ({ otp, title = "confirm Email" }:IVerifyEmai
                 </table>
                 </body>
                 </html>`
-} 
+}  
