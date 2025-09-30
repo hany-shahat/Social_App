@@ -1,13 +1,16 @@
 import { NextFunction, Request, Response } from "express"
 import { IConfirmEmailBodyInputsDTO, IForgotCodeBodyInputsDTO, IGmail, IResetCodeBodyInputsDTO, ISigninBodyInputsDTO, IsignupBodyInputsDTto, IVerifyCodeBodyInputsDTO } from "./auth.dto";
 import { ProviderEnum, UserModel } from "../../DB/models/User.model";
-import { UserRepository } from "../../DB/repository/user.repository";
+
 import { badRequestException, ConflictException, NotFoundException } from "../../utils/response/error.response";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
 import { emailEvent } from "../../events/email.event";
 import { generateNumberOtp } from "../../email/otp";
 import { createLoginCredentials} from "../../utils/security/token.security";
 import {OAuth2Client,type TokenPayload} from 'google-auth-library';
+import { successResponse } from "../../utils/response/success.response";
+import { ILoginResponse } from "./auth.entites";
+import { UserRepository } from "../../DB/repository";
 
 
 class AuthenticationService {
@@ -53,7 +56,7 @@ class AuthenticationService {
       throw new badRequestException("Fail to signup with gmail please try again later")
     }
     const credentials =await createLoginCredentials(newUser)
-    return res.status(201).json({message:"Done" , data:{credentials}})
+    return successResponse<ILoginResponse>({res , statusCode:201 ,data:{credentials} })
   }
   loginWithGmail = async (req: Request, res: Response): Promise<Response> => {
     const { idToken }:IGmail = req.body;
@@ -68,7 +71,7 @@ class AuthenticationService {
       throw new NotFoundException("Not register account or registered with another provider")
     }
     const credentials =await createLoginCredentials(user)
-    return res.json({message:"Done" , data:{credentials}})
+    return successResponse<ILoginResponse>({res , data:{credentials}})
   }
     /**
      * 
@@ -94,9 +97,16 @@ class AuthenticationService {
     throw new ConflictException("Email exist")
    }
    const otp =generateNumberOtp()
-   const user = await this.userModel.createUser({ data: [{ email, userName, password: await generateHash(password),confirmEmailOtp: await generateHash(String(otp)) }] })
-   emailEvent.emit("confirmEmail",{ to: email,otp})
-    return res.status(201).json({ message: "Done ",data:{user}});
+   const user = await this.userModel.createUser({
+     data: [{
+       email,
+       userName,
+       password,
+       confirmEmailOtp: `${otp}`,
+     }]
+   })
+  //  emailEvent.emit("confirmEmail",{ to: email,otp})
+    return successResponse({res , statusCode:201 , data:{user}});
   };
   signin = async(req: Request, res: Response):Promise <Response> => {
     const { email, password }:ISigninBodyInputsDTO = req.body;
@@ -113,7 +123,7 @@ class AuthenticationService {
       throw new NotFoundException("In-vaild login data")
     }
     const credentials=await createLoginCredentials(user)
-  return res.json({message:"Done" , date:{credentials}})
+  return successResponse<ILoginResponse>({res  , data:{credentials}})
 }
   confirmEmail = async (req: Request, res: Response):Promise <Response> => {
     const { email, otp }: IConfirmEmailBodyInputsDTO = req.body;
@@ -137,7 +147,7 @@ class AuthenticationService {
         $unset:{confirmEmailOtp:1}
       }
     })
-  return res.json({message:"Done"})
+  return successResponse({res})
   }
   sendForgotPassword=async(req: Request, res: Response):Promise <Response> => {
     const { email }:IForgotCodeBodyInputsDTO= req.body;
@@ -158,7 +168,7 @@ class AuthenticationService {
       throw new badRequestException("Fail to send the reset code please try again later")
     }
     emailEvent.emit("resetPassword" , {to:email ,otp})
-  return res.json({message:"Done" })
+  return successResponse({res})
 }
   verifyForgotPasswordCode=async(req: Request, res: Response):Promise <Response> => {
     const { email , otp }:IVerifyCodeBodyInputsDTO= req.body;
@@ -175,7 +185,7 @@ class AuthenticationService {
     if (!await compareHash(otp,user.resetPasswordOtp as string)) {
       throw new ConflictException("invaild otp")
     }
-  return res.json({message:"Done" })
+  return successResponse({res})
 }
   resetForgotPasswordCode=async(req: Request, res: Response):Promise <Response> => {
     const { email , otp , password }:IResetCodeBodyInputsDTO= req.body;
@@ -203,7 +213,7 @@ class AuthenticationService {
     if (!result.matchedCount) {
       throw new badRequestException("Fail to reset account password")
     }
-  return res.json({message:"Done" })
+  return successResponse({res})
 }
 
 }

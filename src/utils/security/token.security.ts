@@ -1,9 +1,8 @@
 import { JwtPayload, sign, verify, type Secret, type SignOptions } from "jsonwebtoken"
 import { HUserDocument, RoleEnum, UserModel } from "../../DB/models/User.model";
-import { UserRepository } from "../../DB/repository/user.repository";
+import { UserRepository ,TokenRepository } from "../../DB/repository";
 import { badRequestException, UnauthorizedException } from "../response/error.response";
 import { v4 as uuid} from 'uuid';
-import { TokenRepository } from "../../DB/repository/token.repository";
 import { HTokenDocument, TokenModel } from "../../DB/models/Token.model";
 export enum SignatureLevelEnum {
     Bearer = "Bearer",
