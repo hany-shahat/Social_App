@@ -71,13 +71,14 @@ export const generalFields = {
         );
     } */
     file: function (mimetypes: string[]) {
-    return z.object({
+    return z.strictObject({
         fieldname: z.string(),
         originalname: z.string(),
         encoding: z.string(),
-        mimetype: z.string().refine((val) => mimetypes.includes(val), {
-            message: "Invalid file type"
-        }),
+        mimetype: z.enum(mimetypes),
+        // mimetype: z.string().refine((val) => mimetypes.includes(val), {
+        //     message: "Invalid file type"
+        // }),
         buffer: z.any().optional(),
         size: z.number(),
         // path optional لأن memoryStorage مش بيرجعه

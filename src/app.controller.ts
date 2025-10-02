@@ -11,7 +11,7 @@ import cors from "cors"
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 // Modules routing
-import {authRouter,userRouter ,postRouter  } from "./modules";
+import {authRouter,userRouter ,postRouter} from "./modules";
 import { badRequestException, globalErrorHandling } from "./utils/response/error.response";
 import { promisify } from "node:util";
 import { pipeline } from "node:stream";
@@ -42,6 +42,7 @@ const bootstrap =async ():Promise <void> => {
     app.use("/auth", authRouter)
     app.use("/user", userRouter)
     app.use("/post", postRouter)
+   
     // test s3
     // delete file
    /*  app.get("/test", async (req: Request, res: Response) => {

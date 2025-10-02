@@ -27,8 +27,8 @@ export abstract class DatabaseRepository<TDocment>{
         options,
     }: {
             filter?: RootFilterQuery<TDocment>,
-            select?: ProjectionType<TDocment> | null,
-        options?:QueryOptions<TDocment> | null,
+            select?: ProjectionType<TDocment> | undefined,
+        options?:QueryOptions<TDocment> | undefined,
         }): Promise<HydratedDocument<TDocment> []|[]|lean<TDocment>[]>{
         const doc = this.model.find(filter||{}).select(select || "");
         if (options?.populate) {
@@ -37,13 +37,52 @@ export abstract class DatabaseRepository<TDocment>{
         if (options?.lean){
             doc.lean(options.lean)
         }
-        if (options?.skip){
-            doc.lean(options.skip)
+         if (options?.skip){
+             doc.skip(options.skip)
+         }
+         if (options?.limit){
+             doc.limit(options.limit)
         }
-        if (options?.limit){
-            doc.lean(options.limit)
-        }
+        
+//         if (typeof options?.skip === "number") {
+//     doc.skip(options.skip);
+// }
+
+// if (typeof options?.limit === "number") {
+//     doc.limit(options.limit);
+// }
+
         return await doc.exec()
+    }
+    async paginate({
+        filter={},
+        select,
+        options ={},
+        page = "all",
+        size = 5,
+        
+    }: {
+            filter: RootFilterQuery<TDocment>,
+            select?: ProjectionType<TDocment> | undefined,
+            options?: QueryOptions<TDocment> | undefined,
+            page?: number | "all",
+            size?: number,
+        
+        }): Promise<HydratedDocument<TDocment>[] | [] | lean<TDocment>[] | any>{
+        let docsCount: number | undefined = undefined;
+        let pages: number | undefined = undefined;
+        if (page !== "all") {
+            page = Math.floor(page < 1 ? 1 : page);
+
+        options.limit = Math.floor(page < 1 || !size ? 5 : size);
+        
+            options.skip = (page - 1) * options.limit;
+            console.log(await this.model.countDocuments(filter));
+            docsCount = await this.model.countDocuments(filter)
+            pages=Math.ceil(docsCount/options.limit)
+        }
+       const result =await this.find({filter , select , options})
+        return {docsCount,limit:options.limit,pages,currentPage:page,result};
     }
     async findById({
        id,
@@ -89,7 +128,13 @@ export abstract class DatabaseRepository<TDocment>{
             update: UpdateQuery<TDocment>
             options?: MongooseUpdateQueryOptions<TDocment> | null;
         }): Promise<UpdateWriteOpResult>{
-        return await this.model.updateOne(filter,{...update,$inc:{__v:1}},options)
+        if (Array.isArray(update)) {
+            update.push({
+                $set: { __v: { $add: ["$__v", 1] }, },
+            });
+             return await this.model.updateOne(filter||{},update,options)
+        }
+        return await this.model.updateOne(filter || {},{...update,$inc:{__v:1}},options)
     }
     async deleteOne({
         filter,
@@ -134,4 +179,22 @@ export abstract class DatabaseRepository<TDocment>{
         }): Promise<HydratedDocument<TDocment> | lean <TDocment> | null>{
         return await this.model.findOneAndUpdate(filter,{...update,$inc:{__v:1}},options)
     }
+    async updateMany({
+  filter,
+  update,
+  options,
+}: {
+  filter: RootFilterQuery<TDocment>;
+  update: UpdateQuery<TDocment>;
+  options?: MongooseUpdateQueryOptions<TDocment> | null;
+}): Promise<UpdateWriteOpResult> {
+  if (Array.isArray(update)) {
+    update.push({
+      $set: { __v: { $add: ["$__v", 1] } },
+    });
+    return await this.model.updateMany(filter || {}, update, options);
+  }
+  return await this.model.updateMany(filter || {}, { ...update, $inc: { __v: 1 } }, options);
+}
+
 }

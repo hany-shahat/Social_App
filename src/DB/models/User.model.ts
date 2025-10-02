@@ -8,7 +8,8 @@ export enum GenderEnum{
 }
 export enum RoleEnum{
   user = "user",
-  admin="admin"
+  admin="admin",
+  superAdmin="super-admin"
 }
 export enum ProviderEnum{
   GOOGLE = "GOOGLE",
@@ -40,11 +41,15 @@ export interface IUser{
   freezedBy?: Types.ObjectId;
   restoredAt?: Date;
   restoredBy?: Types.ObjectId;
+  blockedUsers?: Types.ObjectId;
+  friends?: Types.ObjectId[];
   slug: string;
   taggedInPosts: Types.ObjectId[];
 }
 const userSchema = new Schema<IUser>(
   {
+blockedUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],
+
    firstName: {type:String ,required:true ,minlength:2 , maxlength:25},
   lastName:  {type:String , required:true,minlength:2 , maxlength:25},
   slug:  {type:String , required:true,minlength:5 , maxlength:50},
@@ -68,7 +73,9 @@ const userSchema = new Schema<IUser>(
   freezedAt: Date,
   freezedBy: {type:Schema.Types.ObjectId,ref:"User"},
   restoredAt: Date,
-  restoredBy: {type:Schema.Types.ObjectId,ref:"User"},
+    restoredBy: { type: Schema.Types.ObjectId, ref: "User" },
+    friends: [{ type: Schema.Types.ObjectId, ref: "User" }],
+  
   provider:{type:String ,enum:ProviderEnum, default:ProviderEnum.SYSTEM},
   },
   {

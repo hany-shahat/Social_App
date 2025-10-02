@@ -11,7 +11,12 @@ import { endpoint } from "./user.authorization";
 
 
 router.get("/profile" , authentication(), userServise.profile)
+router.get("/dashboard" , authorization(endpoint.dashboard), userServise.dashboard)
 // router.patch("/profile-image" , authentication(),cloudFileUpload({validation:fileValidation.image,storageApproach:StorageEnum.disk}).single("image") ,userServise.profileImage)
+router.patch("/:userId/change-role",
+  authorization(endpoint.dashboard),
+  validation(validators.changeRole),
+  userServise.changeRole)
 router.patch("/profile-cover-images", authentication(), cloudFileUpload({ validation: fileValidation.image, storageApproach: StorageEnum.disk }).array("images", 2), userServise.profileCoverImage)
 router.patch("/profile-image" , authentication(),userServise.profileImage)
 router.post("/logout" , authentication(),validation(validators.logout) ,userServise.logout)
@@ -32,4 +37,30 @@ router.patch(
   validation(validators.UpdateEmail),      
   userServise.UpdateEmail                  
 );
+router.post(
+  "/:userId/send-friend-request",
+  authentication(),                       
+  validation(validators.sendFriendRequest),      
+  userServise.sendFriendRequest                  
+);
+router.patch(
+  "/accept-friend-request/:requestId",
+  authentication(),                       
+  validation(validators.acceptFriendRequest),      
+  userServise.acceptFriendRequest                  
+);
+router.delete(
+  "/:requestId/delete-friend-request",
+  authentication(),
+  validation(validators.deleteFriendRequest),
+  userServise.deleteFriendRequest
+);
+router.patch(
+  "/:userId/block",
+  authentication(),
+  validation(validators.blockUser),
+  userServise.blockUser
+);
+
+
 export default router;

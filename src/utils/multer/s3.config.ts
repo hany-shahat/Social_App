@@ -59,9 +59,12 @@ export const uploadFiles =async ({
     ACL?: ObjectCannedACL;
     path?: string;
     files: Express.Multer.File[]
-}):Promise<string[]> => {
+    }): Promise<string[]> => {
+    
     let urls: string[] = []; 
     urls = await Promise.all(files.map((file) => {
+        console.log("Uploading file:", file.originalname);
+
         return uploadFile({
          storageApproach,
          Bucket,
@@ -79,7 +82,8 @@ export const uploadFiles =async ({
 //         file,
 //     })
 //     urls.push(key)
-//     }
+    //     }
+        console.log("uploaded single file url:", urls);
     return urls
 }
 export const uploadLargeFile =async ({
