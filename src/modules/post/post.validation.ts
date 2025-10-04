@@ -29,6 +29,8 @@ export const createPost = {
         }
     }),
 };
+
+
 export const updatePost = {
     params: z.strictObject({
         postId:generalFields.id
@@ -69,9 +71,6 @@ export const updatePost = {
 };
 
 
-
-
-
 export const likePost = {
     params: z.strictObject({
         postId:generalFields.id,
@@ -87,11 +86,15 @@ export const freezedPost = {
     postId: generalFields.id,
   }),
 };
+
+
 export const hardDeletePost = {
   params: z.strictObject({
     postId: generalFields.id,
   }),
 };
+
+
 export const getPostById = ({
   params: z.object({
     postId:generalFields.id,

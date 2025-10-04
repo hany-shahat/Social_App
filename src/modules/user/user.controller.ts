@@ -1,5 +1,4 @@
 import { Router } from "express";
-const router = Router();
 import userServise from "./user.servise"
 import {  authentication, authorization } from "../../middleware/authentication.middleware";
 // import { endpoint } from "./user.authorization";
@@ -8,7 +7,9 @@ import { validation } from "../../middleware/validation.middleware";
 import { TokenEnum } from "../../utils/security/token.security";
 import { cloudFileUpload, fileValidation, StorageEnum } from "../../utils/multer/cloud.multer";
 import { endpoint } from "./user.authorization";
-
+import { chatRouter } from "../chat";
+const router = Router();
+router.use("/:userId/chat" , chatRouter)
 
 router.get("/profile" , authentication(), userServise.profile)
 router.get("/dashboard" , authorization(endpoint.dashboard), userServise.dashboard)

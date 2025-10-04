@@ -14,16 +14,17 @@ import { IProfileCoverImage, IProfileImageResponse } from "./user.entites";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
 import { generateNumberOtp } from "../../email/otp";
 import { emailEvent } from "../../events/email.event";
-import { FriendRequestRepository, PostRepository } from "../../DB/repository";
-import { FriendRequestModel, PostModel } from "../../DB/models";
+import { ChatRepository, FriendRequestRepository, PostRepository } from "../../DB/repository";
+import { ChatModel, FriendRequestModel, PostModel } from "../../DB/models";
 
 
 
 
 class UserServise{
-    private userModel =new UserRepository(UserModel)
-    private postModel =new PostRepository(PostModel)
-    private friendRequestModel =new FriendRequestRepository(FriendRequestModel)
+    private userModel:UserRepository =new UserRepository(UserModel)
+    private postModel:PostRepository =new PostRepository(PostModel)
+    private chatModel:ChatRepository =new ChatRepository(ChatModel)
+    private friendRequestModel :FriendRequestRepository=new FriendRequestRepository(FriendRequestModel)
     constructor() { }
     profile = async (req: Request, res: Response): Promise<Response> => {
         const profile = await this.userModel.findById({
@@ -38,7 +39,13 @@ class UserServise{
         if (!profile) {
             throw new NotFoundException("fail to find user profile")
         }
-    return successResponse({res,data:{user:profile ,decoded:req.decoded}})
+        const groups = await this.chatModel.find({
+            filter: {
+                participants: { $in: req.user?._id as Types.ObjectId },
+                group:{$exists:true}
+            },
+        });
+    return successResponse({res,data:{user:profile ,groups,decoded:req.decoded}})
     }
     changeRole = async (req: Request, res: Response): Promise<Response> => {
         const { userId } = req.params as unknown as { userId: Types.ObjectId };
@@ -99,7 +106,7 @@ class UserServise{
     }
     profileImage = async (req: Request, res: Response): Promise<Response> => {
 const {ContentType , Originalname}:{ContentType:string,Originalname:string}=req.body
-        const { url, Key } = await createPreSignedLink({ ContentType, Originalname, path: `users/${req.decoded?._id}` })
+        const { url, Key } = await createPreSignedLink({ ContentType, Originalname, path: `users/${req.decoded?._id}`, expiresIn:50 })
         const user = await this.userModel.findByIdAndUpdate({
             id: req.user?._id as Types.ObjectId,
             update: {
@@ -110,7 +117,7 @@ const {ContentType , Originalname}:{ContentType:string,Originalname:string}=req.
         if (!user) {
             throw new badRequestException("Fail to update user profile image")
         }
-        s3Event.emit("trackProfileImageUpload" , {userId:req.user?._id , oldKey:req.user?.profileImage,Key , expiresIn:30000} ,  )
+        s3Event.emit("trackProfileImageUpload" , {userId:req.user?._id , oldKey:req.user?.profileImage,Key , expiresIn:30} ,  )
     return successResponse<IProfileImageResponse>({res,data:{url}})
     }
     logout = async (req: Request, res: Response): Promise<Response> => {

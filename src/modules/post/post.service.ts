@@ -10,6 +10,7 @@ import { LikePostQueryInputDto } from "./post.dto";
 import { Types, UpdateQuery } from "mongoose";
 import { StorageEnum } from "../../utils/multer/cloud.multer";
 import { CommentModel } from "../../DB/models";
+import { connectedSocket, getIo } from "../gateway";
 
 
 export const postAvilability = (req:Request) => {
@@ -168,6 +169,11 @@ console.log("[0] req.files ===>", req.files);
         if (!post) {
             throw new NotFoundException("invaild postId or post not exist")
         }
+        if (action !== LikeActionEnum.unlike) {
+            getIo()
+                .to(connectedSocket.get(post.createdBy.toString()) as string)
+                .emit("likePost", { postId, userId: req.user?._id });
+        };
     return successResponse({res})
     }
     postList = async (req: Request, res: Response): Promise<Response> => {

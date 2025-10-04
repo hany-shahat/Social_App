@@ -11,12 +11,15 @@ import cors from "cors"
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 // Modules routing
-import {authRouter,userRouter ,postRouter} from "./modules";
+import {authRouter,userRouter ,postRouter, initializeIo} from "./modules";
 import { badRequestException, globalErrorHandling } from "./utils/response/error.response";
 import { promisify } from "node:util";
 import { pipeline } from "node:stream";
 import { createGetPreSignedLink,  getFile,  } from "./utils/multer/s3.config";
-const createS3WriteStreamPipe =promisify(pipeline)
+import { chatRouter } from "./modules/chat";
+const createS3WriteStreamPipe = promisify(pipeline)
+
+
 // Handle base rate limit on all api request
 const limiter = rateLimit({
         windowMs: 60 * 60000,
@@ -42,6 +45,7 @@ const bootstrap =async ():Promise <void> => {
     app.use("/auth", authRouter)
     app.use("/user", userRouter)
     app.use("/post", postRouter)
+    app.use("/chat", chatRouter)
    
     // test s3
     // delete file
@@ -74,6 +78,8 @@ const bootstrap =async ():Promise <void> => {
         if (!s3Response?.Body) {
             throw new badRequestException("Fail to fetch this asset")
         }
+
+        res.set("Cross-Origin-Resource-Police", "cross-origin")
         res.setHeader("Content-type", `${s3Response.ContentType || "application/octet-stream"}`)
         if (download==="true") {
             res.setHeader("Content-Disposition", `attachment; filename="${downloadName||Key.split("/").pop()}"`); // only apply it for  download
@@ -114,9 +120,11 @@ const bootstrap =async ():Promise <void> => {
     // Global-error-handling
     app.use(globalErrorHandling)
     // Start server
-    app.listen(port, () => {
+   const httpServer = app.listen(port, () => {
         console.log(`Server is Running on port ${port}`);
         
-    })
+   })
+    initializeIo(httpServer)
+  
 }
 export default bootstrap
