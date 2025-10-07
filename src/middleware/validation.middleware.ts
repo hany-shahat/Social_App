@@ -3,6 +3,7 @@ import type { ZodError, ZodType } from "zod";
 import {z} from "zod"
 import { badRequestException } from "../utils/response/error.response";
 import { Types } from "mongoose";
+import { GraphQLError } from "graphql";
 type keyReqType = keyof Request;
 type SchemaType =Partial <Record<keyReqType, ZodType>>
 export const validation = (schema:SchemaType) => {
@@ -44,6 +45,24 @@ if (validationErrors.length) {
         return next() as unknown as NextFunction
     }
 }
+export const GraphValidation = async <T = any>(schema: ZodType, args: T) => {
+     const validationResult = await schema.safeParseAsync(args)
+    if (!validationResult.success) {
+        const errors = validationResult.error as ZodError
+        throw new GraphQLError("validation error", {
+            extensions: {
+                statisCode: 400,
+                issues:{
+                    key:"args",
+                    issues: errors.issues.map((issue) => {
+                        return {path:issue.path , message:issue.message} 
+                    })
+                }
+            }
+        })
+    }
+    };
+
 export const generalFields = {
     userName: z.string({ error: "userName is required" })
                 .min(2, { error: "min userName length is 2 char" }).max(20, { error: "max userName length is 20 char" }),

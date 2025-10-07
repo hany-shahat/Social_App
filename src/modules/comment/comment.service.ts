@@ -1,7 +1,7 @@
 import type{ Request, Response } from "express";
 import { successResponse } from "../../utils/response/success.response";
  import { PostRepository, UserRepository,CommentRepository } from "../../DB/repository";
- import { AllowCommentsEnum, CommentModel, HPostDocument, PostModel, UserModel } from "../../DB/models";
+ import { AllowCommentsEnum, CommentModel, HPostDocument, HUserDocument, PostModel, UserModel } from "../../DB/models";
 import { badRequestException, ForbiddenException, NotFoundException } from "../../utils/response/error.response";
 import { deleteFiles, uploadFiles } from "../../utils/multer/s3.config";
 import { Types } from "mongoose";
@@ -25,7 +25,7 @@ class CommentService {
             filter: {
                 _id: postId,
                 allowComments: AllowCommentsEnum.allow,
-                $or: postAvilability(req)
+                $or: postAvilability(req.user as HUserDocument)
             }
         });
         if (!post) {
@@ -76,7 +76,7 @@ console.log(req.params);
                         path: "postId",
                         match: {
                              allowComments: AllowCommentsEnum.allow,
-                $or: postAvilability(req)
+                $or: postAvilability(req.user as HUserDocument)
                         }
                     }
                 ]

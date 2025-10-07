@@ -73,3 +73,6 @@ export const blockUser = {
     userId: generalFields.id
   })
 };
+export const welcome = z.strictObject({
+  name: z.string().min(2),
+});

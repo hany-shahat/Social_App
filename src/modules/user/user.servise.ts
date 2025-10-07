@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { UserRepository } from "../../DB/repository/user.repository";
-import { HUserDocument, IUser, RoleEnum, UserModel } from "../../DB/models/User.model";
+import { GenderEnum, HUserDocument, IUser, RoleEnum, UserModel } from "../../DB/models/User.model";
 import { IFreezeAccountDto, IHardDeleteAccountDto, IlogoutDto, IRestoreAccountDto, IUpdateBasicInfoDto, IUpdateEmailDto, IUpdatePasswordDto } from "./user.dto";
 import { createLoginCredentials, createRevokeToken, LogoutEnum } from "../../utils/security/token.security";
 import { Types, UpdateQuery } from "mongoose";
@@ -20,7 +20,14 @@ import { ChatModel, FriendRequestModel, PostModel } from "../../DB/models";
 
 
 
-class UserServise{
+export interface IUserr { id: number; name: string; email: string; password: string; gender: GenderEnum; followers: number[] }
+let users:IUserr [] = [
+    {id:1 , name:"Hany" ,email:"Hany@gmail.com" ,password:"123456" , gender:GenderEnum.male ,followers:[]  } ,
+    {id:2 , name:"sara" ,email:"shahat@gmail.com" ,password:"123456" , gender:GenderEnum.female ,followers:[]  } ,
+    {id:3 , name:"mariam" ,email:"sadek@gmail.com" ,password:"123456" , gender:GenderEnum.female ,followers:[]  } ,
+    {id:4 , name:"shaheta" ,email:"shaheha@gmail.com" ,password:"123456" , gender:GenderEnum.male,followers:[]  } ,
+]
+export class UserServise{
     private userModel:UserRepository =new UserRepository(UserModel)
     private postModel:PostRepository =new PostRepository(PostModel)
     private chatModel:ChatRepository =new ChatRepository(ChatModel)
@@ -409,6 +416,28 @@ deleteFriendRequest = async (req: Request, res: Response): Promise<Response> => 
 
     return successResponse({ res, message: "User has been blocked successfully" });
   };
+    // GrapQL
+    // Query
+    welcome = (user:HUserDocument):string => {
+        return "Hello QraphQL"
+    };
+    allUsers =async (args: { gender: GenderEnum },authUser:HUserDocument):Promise<HUserDocument []> => {
+        return await this.userModel.find({filter:{_id:{$ne:authUser._id},gender:args.gender},})
 
+    };
+    searchUser = (args: { email: string }) => {
+        const user = users.find(ele => ele.email === args.email);
+        return { message: "Done", statusCode: 201, data: user };
+    };
+    // Mutation
+    addFollowers = (args: { friendId: number; myId: number }):IUserr[] => {
+        users = users.map((ele): IUserr => {
+            if (ele.id === args.friendId) {
+                ele.followers.push(args.myId)
+            };
+            return ele;
+        }) as [];
+        return users;
+    };
 }
 export default new UserServise

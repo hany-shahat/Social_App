@@ -11,15 +11,18 @@ import cors from "cors"
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 // Modules routing
-import {authRouter,userRouter ,postRouter, initializeIo} from "./modules";
+import {authRouter,userRouter ,postRouter, initializeIo, schema} from "./modules";
 import { badRequestException, globalErrorHandling } from "./utils/response/error.response";
 import { promisify } from "node:util";
 import { pipeline } from "node:stream";
-import { createGetPreSignedLink,  getFile,  } from "./utils/multer/s3.config";
+import { createGetPreSignedLink, getFile, } from "./utils/multer/s3.config";
 import { chatRouter } from "./modules/chat";
+import {createHandler  } from "graphql-http/lib/use/express";
+ import { authentication } from "./middleware/authentication.middleware";
+
+
+
 const createS3WriteStreamPipe = promisify(pipeline)
-
-
 // Handle base rate limit on all api request
 const limiter = rateLimit({
         windowMs: 60 * 60000,
@@ -27,6 +30,8 @@ const limiter = rateLimit({
         message: { error: "Too Many Request Please Try  again later" },
         statusCode:4029
 })
+
+
     // App-start-point
 const bootstrap =async ():Promise <void> => {
      await connectDB()
@@ -37,8 +42,14 @@ const bootstrap =async ():Promise <void> => {
     app.use(cors())
     app.use(helmet())
     app.use(limiter)
+
+   
+    app.all("/qraphql", authentication(),
+        createHandler({ schema: schema, context: (req) => ({ user: req.raw.user }) }))
+
+
     // app Routing
-    app.get("/", (req: Request, res: Response) => {
+    app.get("/",(req: Request, res: Response) => {
         res.json({message:`Wellcom ${process.env.APPLICATION_NAME}`})
     })
     // Sub-app-routing-modules
